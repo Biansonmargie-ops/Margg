@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medical Equipment Management System (demo data)</title>
+<style>
+  :root { --green:#1f5c4d; --light:#e6efe9; --line:#cfd8d3; --bg:#f6f8f7; --warn:#b3261e; }
+  * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:#1b1f1d; }
+  header { background:var(--green); color:#fff; padding:12px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:1.15rem; flex:1; }
+  header .who { font-size:.85rem; }
+  header .btn { background:transparent; border:1px solid #ffffff88; color:#fff; }
+  nav { display:flex; gap:6px; padding:10px 20px; flex-wrap:wrap; background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:1; }
+  nav button { border:1px solid var(--line); background:var(--light); padding:8px 14px; border-radius:6px; cursor:pointer; font-size:.9rem; }
+  nav button.active { background:var(--green); color:#fff; border-color:var(--green); }
+  main { padding:16px 20px; max-width:1200px; margin:0 auto; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px 12px; }
+  .card b { display:block; font-size:1.4rem; color:var(--green); }
+  .toolbar { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center; }
+  .toolbar .grow { flex:1; }
+  input, select, textarea { width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; font:inherit; background:#fff; }
+  input:disabled { background:#eef1ef; color:#667; }
+  .toolbar input[type=search] { max-width:280px; }
+  .btn { background:var(--green); color:#fff; border:0; padding:8px 14px; border-radius:6px; cursor:pointer; font:inherit; }
+  .btn:disabled { opacity:.6; cursor:wait; }
+  .btn.sec { background:#fff; color:#1b1f1d; border:1px solid var(--line); }
+  .btn.del { background:#fff; color:var(--warn); border:1px solid var(--warn); }
+  .btn.sm { padding:4px 9px; font-size:.8rem; }
+  .tablewrap { overflow-x:auto; background:#fff; border:1px solid var(--line); border-radius:8px; }
+  table { border-collapse:collapse; width:100%; font-size:.88rem; }
+  th { background:var(--green); color:#fff; text-align:left; padding:8px 10px; white-space:nowrap; }
+  td { padding:7px 10px; border-top:1px solid var(--line); vertical-align:top; }
+  tr:nth-child(even) td { background:#f3f7f5; }
+  .empty { padding:20px; text-align:center; color:#667; }
+  dialog { border:0; border-radius:10px; padding:0; width:min(520px,94vw); box-shadow:0 10px 40px #0004; }
+  dialog form { padding:18px; display:grid; gap:10px; max-height:85vh; overflow:auto; }
+  dialog h2 { margin:0 0 4px; font-size:1.05rem; }
+  label { font-size:.82rem; font-weight:600; display:block; margin-bottom:3px; }
+  .row { display:flex; gap:8px; justify-content:flex-end; margin-top:6px; }
+  .err { color:var(--warn); font-size:.85rem; min-height:1.1em; }
+  .pill { padding:2px 8px; border-radius:20px; background:var(--light); font-size:.78rem; white-space:nowrap; }
+  .readonly { background:#fff7e0; border:1px solid #e8d79a; border-radius:6px; padding:6px 10px; font-size:.85rem; margin-bottom:10px; }
+  footer { text-align:center; font-size:.78rem; color:#667; padding:18px; }
+  #auth { min-height:100vh; display:grid; place-items:center; padding:20px; }
+  #auth .box { width:min(380px,100%); background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:0 8px 30px #0001; }
+  #auth .top { background:var(--green); color:#fff; padding:16px 20px; }
+  #auth .top h1 { margin:0; font-size:1.05rem; }
+  #auth form { padding:20px; display:grid; gap:12px; }
+  #auth h2 { margin:0; font-size:1.05rem; }
+  #auth p { margin:0; font-size:.85rem; color:#556; }
+  #auth .btn { width:100%; padding:10px; }
+</style>
+</head>
+<body>
+
+<section id="auth" hidden>
+  <div class="box">
+    <div class="top"><h1>Medical Equipment Management System</h1></div>
+    <form id="authForm">
+      <h2 id="authTitle">Sign in</h2>
+      <p id="authHelp" hidden>First time here. Create the administrator account. You can add other users afterwards.</p>
+      <div><label for="authUser">Username</label><input id="authUser" autocomplete="username" required></div>
+      <div><label for="authPass">Password</label><input id="authPass" type="password" autocomplete="current-password" required></div>
+      <div id="confirmRow" hidden><label for="authPass2">Confirm password</label><input id="authPass2" type="password" autocomplete="new-password"></div>
+      <div class="err" id="authErr"></div>
+      <button class="btn" id="authBtn" type="submit">Sign in</button>
+      <p>Accounts and records are stored in this browser.</p>
+    </form>
+  </div>
+</section>
+
+<div id="app" hidden>
+  <header>
+    <h1>Medical Equipment Management System</h1>
+    <span class="who" id="who"></span>
+    <button class="btn sm" id="pwBtn">Change password</button>
+    <button class="btn sm" id="logoutBtn">Sign out</button>
+  </header>
+  <nav id="tabs"></nav>
+  <main>
+    <div class="readonly" id="roNote" hidden>Your account is read-only. Ask an admin if you need to make changes.</div>
+    <div class="cards" id="summary"></div>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search…">
+      <button class="btn" id="addBtn">+ Add new</button>
+      <span class="grow"></span>
+      <button class="btn sec sm" id="exportBtn">Export backup</button>
+      <button class="btn sec sm" id="importBtn">Import backup</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+    <div class="tablewrap"><table id="tbl"></table></div>
+  </main>
+  <footer>Records and accounts are saved in this browser only. Admins: use “Export backup” regularly.</footer>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="form">
+    <h2 id="dlgTitle"></h2>
+    <div id="fields"></div>
+    <div class="err" id="err"></div>
+    <div class="row">
+      <button type="button" class="btn sec" id="cancel">Cancel</button>
+      <button type="submit" class="btn">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="pwDlg">
+  <form method="dialog" id="pwForm">
+    <h2>Change password</h2>
+    <div><label>Current password</label><input id="pwCur" type="password" autocomplete="current-password" required></div>
+    <div><label>New password (min. 8 characters)</label><input id="pwNew" type="password" autocomplete="new-password" minlength="8" required></div>
+    <div><label>Confirm new password</label><input id="pwNew2" type="password" autocomplete="new-password" minlength="8" required></div>
+    <div class="err" id="pwErr"></div>
+    <div class="row">
+      <button type="button" class="btn sec" id="pwCancel">Cancel</button>
+      <button type="submit" class="btn">Update</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ DATA + ACCOUNTS LAYER (runs in the browser) ============ -->
+<script id="data-layer">
+const STATUSES = ['available', 'in use', 'damaged', 'under maintenance'];
+const ROLES = ['admin', 'staff', 'viewer'];
+const DB_KEY = 'medical-equipment-db-v1';
+const USERS_KEY = 'medical-equipment-users-v1';
+const SESSION_KEY = 'medical-equipment-session-v1';   // sessionStorage: ends when the tab closes
+const LOCK_KEY = 'medical-equipment-lock-v1';
+const SESSION_MS = 8 * 60 * 60 * 1000, MAX_FAILS = 5, LOCK_MS = 5 * 60 * 1000, ITER = 200000;
+
+const SCHEMA = {
+  category:    { pk:'CategoryID',    cols:['CategoryName','Description'], req:['CategoryName'] },
+  supplier:    { pk:'SupplierID',    cols:['SupplierName','ContactPerson','Phone','Email','Address'], req:['SupplierName'] },
+  staff:       { pk:'StaffID',       cols:['FirstName','LastName','Email','Phone','Position'], req:['FirstName','LastName'] },
+  equipment:   { pk:'EquipmentID',   cols:['EquipmentName','Description','CategoryID','SupplierID','PurchaseDate','ExpiryDate','Quantity','EquipmentStatus'],
+                 req:['EquipmentName','CategoryID','SupplierID','PurchaseDate','Quantity','EquipmentStatus'], int:['CategoryID','SupplierID','Quantity'] },
+  maintenance: { pk:'MaintenanceID', cols:['EquipmentID','StaffID','MaintenanceDate','MaintenanceType','Description','MaintenanceCost','Status'],
+                 req:['EquipmentID','StaffID','MaintenanceDate','MaintenanceType','Status'], int:['EquipmentID','StaffID'], num:['MaintenanceCost'] },
+};
+const FKS = {
+  equipment:   [['CategoryID','category'],['SupplierID','supplier']],
+  maintenance: [['EquipmentID','equipment'],['StaffID','staff']],
+};
+
+const readJson = (store, key, fallback) => { try { const v = store.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
+const writeJson = (store, key, val) => store.setItem(key, JSON.stringify(val));
+const fail = (msg, status) => { const e = new Error(msg); if (status) e.status = status; return e; };
+
+function emptyDb() { const db = { seq: {} }; for (const k in SCHEMA) { db[k] = []; db.seq[k] = 0; } return db; }
+function fixDb(d) {
+  d.seq ||= {};
+  for (const k in SCHEMA) { d[k] ||= []; d.seq[k] = Math.max(d.seq[k] || 0, d[k].reduce((m, r) => Math.max(m, r[SCHEMA[k].pk]), 0)); }
+  return d;
+}
+// Demo records: loaded once, the first time the page is opened in a browser with no saved data
+function seedDb() {
+  const d = emptyDb();
+  const add = (t, rec) => { rec[SCHEMA[t].pk] = ++d.seq[t]; d[t].push(rec); };
+  ['Diagnostic|Imaging and monitoring devices', 'Surgical|Operating room instruments', 'Life Support|Ventilation and resuscitation equipment']
+    .forEach(s => { const [n, x] = s.split('|'); add('category', { CategoryName: n, Description: x }); });
+  add('supplier', { SupplierName: 'MediSupply Co.', ContactPerson: 'Ana Reyes', Phone: '0917 000 0001', Email: 'sales@medisupply.example', Address: 'Manila' });
+  add('supplier', { SupplierName: 'CareTech Devices', ContactPerson: 'Mark Santos', Phone: '0918 000 0002', Email: 'info@caretech.example', Address: 'Cebu City' });
+  add('staff', { FirstName: 'Juan', LastName: 'Dela Cruz', Email: 'juan@clinic.example', Phone: '0919 000 0003', Position: 'Biomedical Technician' });
+  add('staff', { FirstName: 'Maria', LastName: 'Lopez', Email: 'maria@clinic.example', Phone: '0920 000 0004', Position: 'Equipment Officer' });
+  add('staff', { FirstName: 'Paolo', LastName: 'Garcia', Email: 'paolo@clinic.example', Phone: '0921 000 0005', Position: 'Maintenance Engineer' });
+  const eq = (EquipmentName, Description, CategoryID, SupplierID, PurchaseDate, ExpiryDate, Quantity, EquipmentStatus) =>
+    add('equipment', { EquipmentName, Description, CategoryID, SupplierID, PurchaseDate, ExpiryDate, Quantity, EquipmentStatus });
+  eq('Patient Monitor', 'Multi-parameter bedside monitor', 1, 1, '2026-01-15', null, 6, 'in use');
+  eq('ECG Machine', '12-lead electrocardiograph', 1, 1, '2025-09-02', null, 3, 'available');
+  eq('Ultrasound Scanner', 'Portable ultrasound', 1, 2, '2025-06-20', null, 2, 'under maintenance');
+  eq('Surgical Light', 'LED operating theatre light', 2, 2, '2024-11-11', null, 4, 'available');
+  eq('Ventilator', 'ICU ventilator', 3, 1, '2025-03-05', null, 5, 'damaged');
+  eq('Defibrillator', 'AED with adult/child pads', 3, 2, '2026-02-18', '2028-02-18', 8, 'available');
+  add('maintenance', { EquipmentID: 1, StaffID: 1, MaintenanceDate: '2026-06-01', MaintenanceType: 'Calibration', Description: 'Routine calibration', MaintenanceCost: 1500, Status: 'completed' });
+  add('maintenance', { EquipmentID: 3, StaffID: 3, MaintenanceDate: '2026-11-18', MaintenanceType: 'Repair', Description: 'Probe replacement', MaintenanceCost: 8200.5, Status: 'in progress' });
+  add('maintenance', { EquipmentID: 5, StaffID: 3, MaintenanceDate: '2026-11-20', MaintenanceType: 'Repair', Description: 'Pressure sensor fault', MaintenanceCost: null, Status: 'scheduled' });
+  add('maintenance', { EquipmentID: 2, StaffID: 2, MaintenanceDate: '2026-05-10', MaintenanceType: 'Inspection', Description: 'Annual safety check', MaintenanceCost: 600, Status: 'completed' });
+  writeJson(localStorage, DB_KEY, d);
+  return d;
+}
+const loadDb = () => { const d = readJson(localStorage, DB_KEY, null); return d ? fixDb(d) : seedDb(); };
+const loadUsers = () => readJson(localStorage, USERS_KEY, []);
+let DB = loadDb(), USERS = loadUsers();
+const saveDb = () => writeJson(localStorage, DB_KEY, DB);
+const saveUsers = () => writeJson(localStorage, USERS_KEY, USERS);
+
+/* ---- passwords: PBKDF2-SHA256 with a random salt ---- */
+const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const DUMMY_SALT = b64(new Uint8Array(16));
+async function hashPw(password, saltB64, iter = ITER) {
+  if (!globalThis.crypto?.subtle) throw fail('This page must be opened over HTTPS (GitHub Pages does this) so passwords can be protected.');
+  const salt = saltB64 ? unb64(saltB64) : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name:'PBKDF2', hash:'SHA-256', salt, iterations: iter }, key, 256);
+  return { hash: b64(bits), salt: b64(salt), iter };
+}
+function checkUsername(u) {
+  if (typeof u !== 'string' || !/^[A-Za-z0-9_.-]{3,32}$/.test(u.trim()))
+    throw fail('Username must be 3-32 characters: letters, numbers, dot, dash or underscore.', 400);
+  return u.trim();
+}
+function checkPassword(p) {
+  if (typeof p !== 'string' || p.length < 8 || p.length > 200) throw fail('Password must be at least 8 characters.', 400);
+  return p;
+}
+
+/* ---- session ---- */
+function currentUser() {
+  USERS = loadUsers();
+  const s = readJson(sessionStorage, SESSION_KEY, null);
+  if (!s || s.exp < Date.now()) return null;
+  const u = USERS.find(x => x.id === s.uid);
+  return u ? { id: u.id, username: u.username, role: u.role } : null;
+}
+const startSession = (uid) => writeJson(sessionStorage, SESSION_KEY, { uid, exp: Date.now() + SESSION_MS });
+const adminCount = () => USERS.filter(u => u.role === 'admin').length;
+
+/* ---- equipment data helpers ---- */
+const blank = (v) => v === '' || v === undefined || v === null;
+function normalize(table, body, partial) {
+  const s = SCHEMA[table], out = {};
+  const missing = s.req.filter(k => partial ? (k in body && blank(body[k])) : blank(body[k]));
+  if (missing.length) throw fail('Missing: ' + missing.join(', '), 400);
+  for (const k of s.cols) {
+    if (!(k in body)) continue;
+    let v = blank(body[k]) ? null : body[k];
+    if (v !== null && (s.int || []).includes(k)) { v = parseInt(v, 10); if (Number.isNaN(v)) throw fail('Invalid number in ' + k, 400); }
+    if (v !== null && (s.num || []).includes(k)) { v = parseFloat(v); if (Number.isNaN(v)) throw fail('Invalid number in ' + k, 400); }
+    out[k] = v;
+  }
+  if (table === 'equipment' && 'EquipmentStatus' in out && !STATUSES.includes(out.EquipmentStatus)) throw fail('Invalid equipment status', 400);
+  if (table === 'equipment' && 'Quantity' in out && out.Quantity < 0) throw fail('Quantity cannot be negative', 400);
+  for (const [col, parent] of (FKS[table] || []))
+    if (col in out && !DB[parent].some(r => r[SCHEMA[parent].pk] === out[col])) throw fail('Linked record does not exist: ' + col, 400);
+  return out;
+}
+function joined(table) {
+  const byId = (t, id) => DB[t].find(r => r[SCHEMA[t].pk] === id);
+  const rows = DB[table].map(r => ({ ...r }));
+  if (table === 'equipment') rows.forEach(r => {
+    r.CategoryName = byId('category', r.CategoryID)?.CategoryName ?? null;
+    r.SupplierName = byId('supplier', r.SupplierID)?.SupplierName ?? null;
+  });
+  if (table === 'maintenance') rows.forEach(r => {
+    r.EquipmentName = byId('equipment', r.EquipmentID)?.EquipmentName ?? null;
+    const st = byId('staff', r.StaffID);
+    r.StaffName = st ? `${st.FirstName} ${st.LastName}` : null;
+  });
+  return rows.sort((a, b) => b[SCHEMA[table].pk] - a[SCHEMA[table].pk]);
+}
+
+/* ---- one entry point, same shape as a web API ---- */
+async function api(path, opts = {}) {
+  const [name, idRaw] = path.split('/');
+  const method = (opts.method || 'GET').toUpperCase();
+  const body = opts.body ? JSON.parse(opts.body) : {};
+  DB = loadDb(); USERS = loadUsers();                       // always start from what is saved (several tabs)
+
+  // ----- public -----
+  if (name === 'me') { const u = currentUser(); return { setupNeeded: USERS.length === 0, user: u ? { username: u.username, role: u.role } : null }; }
+
+  if (name === 'setup' && method === 'POST') {
+    if (USERS.length) throw fail('Setup already completed.', 403);
+    const username = checkUsername(body.Username);
+    const h = await hashPw(checkPassword(body.Password));
+    USERS = loadUsers(); if (USERS.length) throw fail('Setup already completed.', 403);
+    USERS.push({ id: 1, username, hash: h.hash, salt: h.salt, iter: h.iter, role: 'admin', created: new Date().toISOString() });
+    saveUsers(); startSession(1);
+    return { ok: true };
+  }
+
+  if (name === 'login' && method === 'POST') {
+    const uname = String(body.Username || '').trim().toLowerCase(), pw = String(body.Password || '').slice(0, 200);
+    const locks = readJson(localStorage, LOCK_KEY, {});
+    if (locks[uname]?.until > Date.now()) throw fail('Too many failed attempts. Try again in a few minutes.', 429);
+    const u = USERS.find(x => x.username.toLowerCase() === uname);
+    const { hash } = await hashPw(pw, u ? u.salt : DUMMY_SALT, u ? u.iter : ITER);
+    if (!u || hash !== u.hash) {
+      const l = locks[uname] && !(locks[uname].until && locks[uname].until < Date.now()) ? locks[uname] : { fails: 0 };
+      l.fails = (l.fails || 0) + 1; l.until = null;
+      if (l.fails >= MAX_FAILS) { l.until = Date.now() + LOCK_MS; l.fails = 0; }
+      locks[uname] = l; writeJson(localStorage, LOCK_KEY, locks);
+      throw fail('Incorrect username or password.', 401);
+    }
+    delete locks[uname]; writeJson(localStorage, LOCK_KEY, locks);
+    startSession(u.id);
+    return { ok: true };
+  }
+
+  // ----- signed-in only -----
+  const me = currentUser();
+  if (!me) throw fail('Please sign in.', 401);
+
+  if (name === 'logout') { sessionStorage.removeItem(SESSION_KEY); return { ok: true }; }
+
+  if (name === 'password' && method === 'POST') {
+    const u = USERS.find(x => x.id === me.id);
+    const cur = await hashPw(String(body.Current || '').slice(0, 200), u.salt, u.iter);
+    if (cur.hash !== u.hash) throw fail('Current password is incorrect.', 400);
+    const h = await hashPw(checkPassword(body.New));
+    Object.assign(u, { hash: h.hash, salt: h.salt, iter: h.iter }); saveUsers();
+    return { ok: true };
+  }
+
+  if (name === 'users') {
+    if (me.role !== 'admin') throw fail('Admins only.', 403);
+    const id = idRaw ? parseInt(idRaw, 10) : null;
+    if (method === 'GET') return USERS.map(u => ({ UserID: u.id, Username: u.username, Role: u.role, CreatedAt: (u.created || '').slice(0, 10) })).sort((a, b) => a.UserID - b.UserID);
+    if (method === 'POST') {
+      const username = checkUsername(body.Username), role = body.Role || 'staff';
+      if (!ROLES.includes(role)) throw fail('Invalid role.', 400);
+      const h = await hashPw(checkPassword(body.Password));
+      USERS = loadUsers();
+      if (USERS.some(u => u.username.toLowerCase() === username.toLowerCase())) throw fail('That username is already taken.', 409);
+      const nid = USERS.reduce((m, u) => Math.max(m, u.id), 0) + 1;
+      USERS.push({ id: nid, username, hash: h.hash, salt: h.salt, iter: h.iter, role, created: new Date().toISOString() }); saveUsers();
+      return { id: nid };
+    }
+    const target = USERS.find(u => u.id === id);
+    if (!target) throw fail('User not found.', 404);
+    if (method === 'PUT') {
+      if (body.Role !== undefined) {
+        if (!ROLES.includes(body.Role)) throw fail('Invalid role.', 400);
+        if (target.role === 'admin' && body.Role !== 'admin' && adminCount() <= 1) throw fail('There must be at least one admin.', 409);
+      }
+      if (body.Role === undefined && !body.Password) throw fail('Nothing to update.', 400);
+      if (body.Password) { const h = await hashPw(checkPassword(body.Password)); Object.assign(target, { hash: h.hash, salt: h.salt, iter: h.iter }); }
+      if (body.Role !== undefined) target.role = body.Role;
+      saveUsers(); return { ok: true };
+    }
+    if (method === 'DELETE') {
+      if (target.id === me.id) throw fail('You cannot delete your own account.', 409);
+      if (target.role === 'admin' && adminCount() <= 1) throw fail('There must be at least one admin.', 409);
+      USERS = USERS.filter(u => u.id !== id); saveUsers(); return { ok: true };
+    }
+    throw fail('Method not allowed', 405);
+  }
+
+  if (name === 'backup') {                                  // admins only: the file contains account hashes
+    if (me.role !== 'admin') throw fail('Admins only.', 403);
+    if (method === 'GET') return { app: 'medical-equipment', version: 1, db: DB, users: USERS };
+    if (method === 'POST') {
+      const d = body.db || (Object.keys(SCHEMA).every(k => Array.isArray(body[k])) ? body : null);   // also accepts the older no-login backup
+      if (!d || !Object.keys(SCHEMA).every(k => Array.isArray(d[k]))) throw fail('Not a valid backup file.', 400);
+      let users = USERS;
+      if (Array.isArray(body.users)) {
+        const ok = body.users.every(u => u && Number.isInteger(u.id) && u.username && u.hash && u.salt && ROLES.includes(u.role));
+        if (!ok || !body.users.some(u => u.role === 'admin')) throw fail('Backup has no valid admin account.', 400);
+        users = body.users;
+      }
+      DB = fixDb(d); USERS = users; saveDb(); saveUsers();
+      return { ok: true };
+    }
+  }
+
+  if (name === 'summary') {
+    return STATUSES.map(st => { const rs = DB.equipment.filter(e => e.EquipmentStatus === st); return { status: st, units: rs.reduce((a, r) => a + (r.Quantity || 0), 0), records: rs.length }; });
+  }
+
+  const s = SCHEMA[name];
+  if (!s) throw fail('Unknown resource', 404);
+  const id = idRaw ? parseInt(idRaw, 10) : null;
+  if (method === 'GET') return joined(name);
+  if (method === 'DELETE' && me.role !== 'admin') throw fail('Only admins can delete records.', 403);
+  if ((method === 'POST' || method === 'PUT') && me.role === 'viewer') throw fail('Your account is read-only.', 403);
+
+  if (method === 'POST') {
+    const rec = normalize(name, body, false);
+    rec[s.pk] = ++DB.seq[name]; DB[name].push(rec); saveDb();
+    return { id: rec[s.pk] };
+  }
+  if (method === 'PUT') {
+    const rec = DB[name].find(r => r[s.pk] === id);
+    if (!rec) throw fail('Record not found', 404);
+    Object.assign(rec, normalize(name, body, true)); saveDb();
+    return { ok: true };
+  }
+  if (method === 'DELETE') {
+    for (const [child, links] of Object.entries(FKS))
+      for (const [col, parent] of links)
+        if (parent === name && DB[child].some(r => r[col] === id)) throw fail('This record is linked to other records. Remove those first.', 409);
+    DB[name] = DB[name].filter(r => r[s.pk] !== id); saveDb();
+    return { ok: true };
+  }
+  throw fail('Method not allowed', 405);
+}
+</script>
+
+<!-- ============ USER INTERFACE ============ -->
+<script id="ui">
+const E = {
+  equipment: { label:'Equipment', pk:'EquipmentID',
+    cols:[['EquipmentName','Name'],['CategoryName','Category'],['SupplierName','Supplier'],['PurchaseDate','Purchased'],['ExpiryDate','Expires'],['Quantity','Qty'],['EquipmentStatus','Status']],
+    fields:[
+      {k:'EquipmentName',l:'Equipment name',t:'text',req:1},
+      {k:'Description',l:'Description',t:'textarea'},
+      {k:'CategoryID',l:'Category',t:'fk',ref:'category',show:r=>r.CategoryName,req:1},
+      {k:'SupplierID',l:'Supplier',t:'fk',ref:'supplier',show:r=>r.SupplierName,req:1},
+      {k:'PurchaseDate',l:'Purchase date',t:'date',req:1},
+      {k:'ExpiryDate',l:'Expiry date',t:'date'},
+      {k:'Quantity',l:'Quantity (available units)',t:'number',req:1,def:1},
+      {k:'EquipmentStatus',l:'Status',t:'select',opts:STATUSES,req:1,def:'available'}]},
+  category: { label:'Categories', pk:'CategoryID', one:'category',
+    cols:[['CategoryName','Name'],['Description','Description']],
+    fields:[{k:'CategoryName',l:'Category name',t:'text',req:1},{k:'Description',l:'Description',t:'textarea'}]},
+  supplier: { label:'Suppliers', pk:'SupplierID', one:'supplier',
+    cols:[['SupplierName','Name'],['ContactPerson','Contact'],['Phone','Phone'],['Email','Email'],['Address','Address']],
+    fields:[{k:'SupplierName',l:'Supplier name',t:'text',req:1},{k:'ContactPerson',l:'Contact person',t:'text'},{k:'Phone',l:'Phone',t:'text'},{k:'Email',l:'Email',t:'email'},{k:'Address',l:'Address',t:'text'}]},
+  staff: { label:'Staff', pk:'StaffID', one:'staff member',
+    cols:[['FirstName','First name'],['LastName','Last name'],['Email','Email'],['Phone','Phone'],['Position','Position']],
+    fields:[{k:'FirstName',l:'First name',t:'text',req:1},{k:'LastName',l:'Last name',t:'text',req:1},{k:'Email',l:'Email',t:'email'},{k:'Phone',l:'Phone',t:'text'},{k:'Position',l:'Position',t:'text'}]},
+  maintenance: { label:'Maintenance', pk:'MaintenanceID', one:'maintenance record',
+    cols:[['EquipmentName','Equipment'],['StaffName','Handled by'],['MaintenanceDate','Date'],['MaintenanceType','Type'],['Description','Description'],['MaintenanceCost','Cost'],['Status','Status']],
+    fields:[
+      {k:'EquipmentID',l:'Equipment',t:'fk',ref:'equipment',show:r=>r.EquipmentName,req:1},
+      {k:'StaffID',l:'Handled by (staff)',t:'fk',ref:'staff',show:r=>`${r.FirstName} ${r.LastName}`,req:1},
+      {k:'MaintenanceDate',l:'Maintenance date',t:'date',req:1},
+      {k:'MaintenanceType',l:'Type (e.g. Calibration, Repair)',t:'text',req:1},
+      {k:'Description',l:'Description',t:'textarea'},
+      {k:'MaintenanceCost',l:'Cost (repair/service amount)',t:'number',step:'0.01'},
+      {k:'Status',l:'Status',t:'select',opts:['scheduled','in progress','completed'],req:1,def:'scheduled'}]},
+  users: { label:'Users', pk:'UserID', one:'user', adminOnly:true,
+    cols:[['Username','Username'],['Role','Role'],['CreatedAt','Created']],
+    fields:[
+      {k:'Username',l:'Username (3-32 letters, numbers, . - _)',t:'text',req:1,lockEdit:1},
+      {k:'Password',l:'Password (min. 8 characters)',t:'password',req:1,pw:1},
+      {k:'Role',l:'Role',t:'select',opts:ROLES,req:1,def:'staff'}]},
+};
+
+let me = null, cur = 'equipment', rows = [], editing = null, authMode = 'login';
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const canWrite = () => me && me.role !== 'viewer';
+const canDelete = () => me && me.role === 'admin';
+
+// wrapper: if the session ended, go back to the sign-in screen
+async function call(path, opts) {
+  try { return await api(path, opts); }
+  catch (e) { if (e.status === 401 && path !== 'login') { me = null; boot(); } throw e; }
+}
+
+/* ---------- sign-in / first-time setup ---------- */
+function showAuth(mode) {
+  authMode = mode;
+  $('#app').hidden = true; $('#auth').hidden = false;
+  const setup = mode === 'setup';
+  $('#authTitle').textContent = setup ? 'Create administrator account' : 'Sign in';
+  $('#authHelp').hidden = !setup; $('#confirmRow').hidden = !setup;
+  $('#authPass2').required = setup;
+  $('#authPass').autocomplete = setup ? 'new-password' : 'current-password';
+  $('#authBtn').textContent = setup ? 'Create account' : 'Sign in';
+  $('#authErr').textContent = '';
+  $('#authUser').focus();
+}
+$('#authForm').onsubmit = async (ev) => {
+  ev.preventDefault();
+  const Username = $('#authUser').value.trim(), Password = $('#authPass').value;
+  if (authMode === 'setup' && Password !== $('#authPass2').value) { $('#authErr').textContent = 'Passwords do not match.'; return; }
+  $('#authBtn').disabled = true;
+  try {
+    await call(authMode === 'setup' ? 'setup' : 'login', { method: 'POST', body: JSON.stringify({ Username, Password }) });
+    $('#authPass').value = ''; $('#authPass2').value = '';
+    await boot();
+  } catch (e) { $('#authErr').textContent = e.message; }
+  $('#authBtn').disabled = false;
+};
+async function boot() {
+  const s = await api('me');
+  if (s.setupNeeded) return showAuth('setup');
+  if (!s.user) return showAuth('login');
+  me = s.user;
+  $('#auth').hidden = true; $('#app').hidden = false;
+  $('#who').textContent = `${me.username} (${me.role})`;
+  $('#roNote').hidden = canWrite();
+  $('#addBtn').hidden = !canWrite();
+  $('#exportBtn').hidden = $('#importBtn').hidden = me.role !== 'admin';
+  if (E[cur].adminOnly && me.role !== 'admin') cur = 'equipment';
+  load();
+}
+$('#logoutBtn').onclick = async () => { try { await api('logout', { method: 'POST' }); } catch {} me = null; await boot(); };
+
+/* ---------- change own password ---------- */
+$('#pwBtn').onclick = () => { $('#pwForm').reset(); $('#pwErr').textContent = ''; $('#pwDlg').showModal(); };
+$('#pwCancel').onclick = () => $('#pwDlg').close();
+$('#pwForm').onsubmit = async (ev) => {
+  ev.preventDefault();
+  if ($('#pwNew').value !== $('#pwNew2').value) { $('#pwErr').textContent = 'New passwords do not match.'; return; }
+  try {
+    await call('password', { method: 'POST', body: JSON.stringify({ Current: $('#pwCur').value, New: $('#pwNew').value }) });
+    $('#pwDlg').close(); alert('Password updated.');
+  } catch (e) { $('#pwErr').textContent = e.message; }
+};
+
+/* ---------- screens ---------- */
+function renderTabs() {
+  $('#tabs').innerHTML = Object.entries(E).filter(([, v]) => !v.adminOnly || me.role === 'admin').map(([k, v]) =>
+    `<button data-k="${k}" class="${k === cur ? 'active' : ''}">${v.label}</button>`).join('');
+  $('#tabs').querySelectorAll('button').forEach(b => b.onclick = () => { cur = b.dataset.k; $('#search').value = ''; load(); });
+}
+async function loadSummary() {
+  if (E[cur].adminOnly) { $('#summary').innerHTML = ''; return; }
+  try {
+    const s = await call('summary');
+    const total = s.reduce((a, r) => a + r.units, 0);
+    $('#summary').innerHTML = `<div class="card"><b>${total}</b>Total units</div>` +
+      s.map(r => `<div class="card"><b>${r.units}</b>${r.status}</div>`).join('');
+  } catch { $('#summary').innerHTML = ''; }
+}
+async function load() {
+  renderTabs();
+  try { rows = await call(cur); } catch (e) { if (me) alert(e.message); return; }
+  renderTable(); loadSummary();
+}
+function renderTable() {
+  const cfg = E[cur], q = $('#search').value.toLowerCase();
+  const list = rows.filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
+  if (!list.length) { $('#tbl').innerHTML = '<tr><td class="empty">No records yet.' + (canWrite() ? ' Click “+ Add new”.' : '') + '</td></tr>'; return; }
+  $('#tbl').innerHTML = '<tr>' + cfg.cols.map(c => `<th>${c[1]}</th>`).join('') + '<th></th></tr>' +
+    list.map(r => '<tr>' + cfg.cols.map(([k]) => {
+      const v = r[k];
+      if (k === 'EquipmentStatus' || k === 'Role' || (cur === 'maintenance' && k === 'Status')) return `<td><span class="pill">${esc(v)}</span></td>`;
+      if (k === 'MaintenanceCost') return `<td>${v == null ? '' : Number(v).toFixed(2)}</td>`;
+      return `<td>${esc(v)}</td>`;
+    }).join('') +
+    `<td style="white-space:nowrap">` +
+      (canWrite() ? `<button class="btn sec sm" data-e="${r[cfg.pk]}">Edit</button> ` : '') +
+      (canDelete() && !(cur === 'users' && r.Username.toLowerCase() === me.username.toLowerCase()) ? `<button class="btn del sm" data-d="${r[cfg.pk]}">Delete</button>` : '') +
+    `</td></tr>`).join('');
+  $('#tbl').querySelectorAll('[data-e]').forEach(b => b.onclick = () => openForm(rows.find(r => r[cfg.pk] == b.dataset.e)));
+  $('#tbl').querySelectorAll('[data-d]').forEach(b => b.onclick = async () => {
+    if (!confirm('Delete this record?')) return;
+    try { await call(`${cur}/${b.dataset.d}`, { method: 'DELETE' }); load(); } catch (e) { alert(e.message); }
+  });
+}
+async function openForm(rec) {
+  const cfg = E[cur]; editing = rec || null;
+  const isEdit = !!rec;
+  $('#dlgTitle').textContent = (isEdit ? 'Edit ' : 'Add ') + (cfg.one || cfg.label.toLowerCase());
+  $('#err').textContent = '';
+  const refs = {};
+  try { for (const f of cfg.fields) if (f.t === 'fk' && !refs[f.ref]) refs[f.ref] = await call(f.ref); }
+  catch (e) { alert(e.message); return; }
+  $('#fields').innerHTML = cfg.fields.map(f => {
+    const val = rec ? rec[f.k] : f.def;
+    const required = f.req && !(f.pw && isEdit);
+    const a = `name="${f.k}" ${required ? 'required' : ''} ${f.lockEdit && isEdit ? 'disabled' : ''}`;
+    let input;
+    if (f.t === 'textarea') input = `<textarea ${a} rows="2">${esc(val)}</textarea>`;
+    else if (f.t === 'select') input = `<select ${a}>${f.opts.map(o => `<option ${o === val ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+    else if (f.t === 'fk') {
+      const pk = E[f.ref].pk;
+      input = `<select ${a}><option value="">— choose —</option>${refs[f.ref].map(r => `<option value="${r[pk]}" ${r[pk] == val ? 'selected' : ''}>${esc(f.show(r))}</option>`).join('')}</select>`;
+    } else if (f.t === 'password') {
+      input = `<input type="password" ${a} minlength="8" autocomplete="new-password" placeholder="${isEdit ? 'Leave blank to keep current password' : ''}">`;
+    } else input = `<input type="${f.t}" ${a} value="${esc(val)}" ${f.t === 'number' ? `step="${f.step || 1}" min="0"` : ''}>`;
+    return `<div><label>${f.l}${required ? ' *' : ''}</label>${input}</div>`;
+  }).join('');
+  $('#dlg').showModal();
+}
+$('#form').onsubmit = async (ev) => {
+  ev.preventDefault();
+  const body = Object.fromEntries(new FormData($('#form')));
+  if (cur === 'users' && editing) { if (!body.Password) delete body.Password; delete body.Username; }
+  try {
+    if (editing) await call(`${cur}/${editing[E[cur].pk]}`, { method: 'PUT', body: JSON.stringify(body) });
+    else await call(cur, { method: 'POST', body: JSON.stringify(body) });
+    $('#dlg').close(); load();
+  } catch (e) { $('#err').textContent = e.message; }
+};
+$('#cancel').onclick = () => $('#dlg').close();
+$('#addBtn').onclick = () => openForm(null);
+$('#search').oninput = renderTable;
+
+/* ---------- backup (admins) ---------- */
+$('#exportBtn').onclick = async () => {
+  try {
+    const data = await call('backup');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    a.download = `medical-equipment-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click(); URL.revokeObjectURL(a.href);
+  } catch (e) { alert(e.message); }
+};
+$('#importBtn').onclick = () => $('#importFile').click();
+$('#importFile').onchange = async (ev) => {
+  const file = ev.target.files[0]; ev.target.value = '';
+  if (!file) return;
+  try {
+    const text = await file.text(); JSON.parse(text);
+    if (!confirm('Replace all current data (and accounts, if the backup includes them) with this backup?')) return;
+    await call('backup', { method: 'POST', body: text });
+    await boot();
+  } catch (e) { alert(e.message); }
+};
+
+boot().catch((e) => { showAuth('login'); $('#authErr').textContent = e.message; });
+</script>
+</body>
+</html>
